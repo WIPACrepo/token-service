@@ -1,0 +1,16 @@
+{% extends main.html %}
+
+{% block content %}
+<h3>Login:</h3>
+<form method="post">
+{% module xsrf_form_html() %}
+    <input type="hidden" name="challenge" value="{{ challenge }}" />
+    <div>Username: <input type="text" name="username" value="{{ username }}" autofocus autocomplete="username" /></div>
+    <div>Password: <input type="password" name="password" value="" /></div>
+    <div><input type="checkbox" id="remember" name="remember" value="true" {% if remember %}checked{% end %}><label for="remember">Remember me</label></div>
+    {% if error %}
+    <p class="error">Username or password invalid!</p>
+    {% end %}
+    <input type="submit" value="Submit" />
+</form>
+{% end %}

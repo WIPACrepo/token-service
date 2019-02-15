@@ -1,0 +1,21 @@
+{% extends main.html %}
+
+{% block content %}
+<h3>Consent</h3>
+<p>Grant access to these scopes:</p>
+<form method="post">
+{% module xsrf_form_html() %}
+    <input type="hidden" name="challenge" value="{{ challenge }}" />
+    <input type="hidden" name="scopes" value="{{ '|'.join(scopes) }}" />
+    {% for s in scopes %}
+    <div>
+      <input type="checkbox" name="scopes_accepted" value="{{s}}" id="scope_{{ s }}" checked>
+      <label for="scope_{{ s }}">{{ s }}</label>
+    </div>
+    {% end %}
+    {% if error %}
+    <p class="error">An error occurred. Try again.</p>
+    {% end %}
+    <input type="submit" value="Submit" />
+</form>
+{% end %}
