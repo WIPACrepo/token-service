@@ -6,6 +6,7 @@ to generate access and refresh tokens, and maintain a revocation list.
 import os
 import sys
 import random
+import time
 import logging
 import asyncio
 import hmac
@@ -45,6 +46,7 @@ EXPECTED_CONFIG = {
     'oauth_client_secret': None,
     'access_token_expiration': 3600, # 1 hour
     'refresh_token_expiration': 86400, # 1 day
+    'service_token_expiration': 86400*365, # 1 year
     'identity_expiration': 86400*90, # 90 days
     'port': 8888,
 }
@@ -78,14 +80,16 @@ def get_config():
 
 def get_exp_date(seconds):
     """
-    Get an ISO-8601 timestamp for expiration date.
+    Get a timestamp for expiration.
+
+    Use unix time in seconds.
 
     Args:
         seconds (float): number of seconds from now to expire
     Returns:
-        str: timestamp in UTC
+        int: timestamp in unix time
     """
-    return (datetime.utcnow()+timedelta(seconds=seconds)).isoformat()
+    return time.time()+seconds
 
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self, session, auth, identity_expiration):
@@ -235,7 +239,8 @@ class TokenHandler(HumanHandler):
         data['scopes'] = ' '.join(scopes)
 
         # authz all done, make a token
-        token = self.auth.create_token(self.identity['sub'], type='refresh', payload=data)
+        token = self.auth.create_token(self.identity['sub'], type='refresh',
+                                       payload=data)
 
         if self.get_argument('redirect', False):
             url = self.get_argument('redirect')
@@ -244,6 +249,49 @@ class TokenHandler(HumanHandler):
             self.redirect(url)
         else:
             self.write(token)
+
+class ServiceTokenHandler(HumanHandler):
+    """
+    Handler for user-interacting service token request.
+
+    These act like refresh tokens, but for services.
+
+    Checks with the IDP as necessary, and validates access to scopes.
+
+    Parameters:
+        scope: space separated scopes
+        expiration: requested expiration length in seconds (must be less than max expiration)
+    """
+    @catch_error
+    async def get(self):
+        if not self.current_user:
+            url = url_concat(self.get_login_url(), {'redirect': self.request.full_url()})
+            if self.get_argument('state', False):
+                url = url_concact(url, {'state': self.get_argument('state')})
+            self.redirect(url)
+            return
+
+        # scope checks
+        scopes = []
+        if self.get_argument('scopes', False):
+            scopes = self.get_argument('scopes').split()
+        data = {
+            'aud': 'ANY',
+            'ver': 'scitoken:2.0',
+            'name': self.identity['name'],
+        }
+        # TODO: should check authz here
+        data['scopes'] = ' '.join(scopes)
+
+        # authz all done, make a token
+        exp = None
+        if self.get_argument('expiration', False):
+            exp = int(self.get_argument('expiration'))
+        token = self.auth.create_token(self.identity['sub'], type='service',
+                                       expiration=exp, payload=data)
+
+        self.write(token)
+
 
 class BotHandler(BaseHandler):
     def get_current_user(self):
@@ -277,10 +325,14 @@ class RefreshHandler(BotHandler):
     @authenticated
     @catch_error
     async def get(self):
+        if self.auth_data['type'] != 'refresh':
+            raise HTTPError(400, 'bad token type')
+
         data = {}
         for key in ('aud', 'ver', 'name', 'refresh_lifetime', 'scopes'):
             data[key] = self.auth_data[key]
-        token = self.auth.create_token(self.auth_data['sub'], type='refresh', payload=data)
+        token = self.auth.create_token(self.auth_data['sub'], type='refresh',
+                                       payload=data)
         self.write(token)
 
 
@@ -307,6 +359,12 @@ def main():
         expiration=config['refresh_token_expiration'],
         expiration_temp=config['access_token_expiration'],
     )
+    service_auth = Auth(
+        secret=config['auth_secret'],
+        issuer='https://tokens.icecube.wisc.edu',
+        expiration=config['service_token_expiration'],
+        expiration_temp=config['access_token_expiration'],
+    )
 
     # set up server
     server = RestServer(
@@ -331,9 +389,12 @@ def main():
         'oauth_client_id': config['oauth_client_id'],
         'oauth_client_secret': config['oauth_client_secret'],
     })
+    service_handler_settings = handler_settings.copy()
+    service_handler_settings['auth'] = service_auth
 
     server.add_route(r'/login', LoginHandler, login_handler_settings)
     server.add_route(r'/token', TokenHandler, handler_settings)
+    server.add_route(r'/service_token', ServiceTokenHandler, service_handler_settings)
     server.add_route(r'/refresh', RefreshHandler, handler_settings)
 
     server.startup(port=config['port'], address='0.0.0.0')
