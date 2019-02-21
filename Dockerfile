@@ -11,7 +11,6 @@ USER app
 WORKDIR /usr/src/app
 
 COPY server.py ./
-COPY static static/
-COPY templates templates/
+COPY token_service ./token_service/
 
 CMD [ "python", "./server.py" ]
