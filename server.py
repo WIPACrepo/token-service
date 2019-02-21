@@ -238,17 +238,20 @@ class TokenHandler(HumanHandler):
         # TODO: should check authz here
         data['scopes'] = ' '.join(scopes)
 
-        # authz all done, make a token
-        token = self.auth.create_token(self.identity['sub'], type='refresh',
-                                       payload=data)
+        # authz all done, make tokens
+        access = self.auth.create_token(self.identity['sub'], type='temp',
+                                        payload=data)
+        refresh = self.auth.create_token(self.identity['sub'], type='refresh',
+                                         payload=data)
 
         if self.get_argument('redirect', False):
             url = self.get_argument('redirect')
+            args = {'access': access, 'refresh': refresh}
             if self.get_argument('state', False):
-                url = url_concact(url, {'state': self.get_argument('state')})
-            self.redirect(url)
+                args['state'] = self.get_argument('state')
+            self.redirect(url_concact(url, args))
         else:
-            self.write(token)
+            self.write({'access':access,'refresh':refresh})
 
 class ServiceTokenHandler(HumanHandler):
     """
@@ -331,9 +334,12 @@ class RefreshHandler(BotHandler):
         data = {}
         for key in ('aud', 'ver', 'name', 'refresh_lifetime', 'scopes'):
             data[key] = self.auth_data[key]
-        token = self.auth.create_token(self.auth_data['sub'], type='refresh',
-                                       payload=data)
-        self.write(token)
+
+        access = self.auth.create_token(self.auth_data['sub'], type='temp',
+                                        payload=data)
+        refresh = self.auth.create_token(self.auth_data['sub'], type='refresh',
+                                         payload=data)
+        self.write({'access':access,'refresh':refresh})
 
 
 def main():
