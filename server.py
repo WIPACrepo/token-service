@@ -29,6 +29,7 @@ def gen_secret(length):
 EXPECTED_CONFIG = {
     'cookie_secret': gen_secret(64),
     'auth_secret': gen_secret(64),
+    'mongodb_uri': 'mongodb://localhost:27017/',
     'oauth_uri': None,
     'oauth_client_id': None,
     'oauth_client_secret': None,
@@ -36,6 +37,9 @@ EXPECTED_CONFIG = {
     'refresh_token_expiration': 86400, # 1 day
     'service_token_expiration': 86400*365, # 1 year
     'identity_expiration': 86400*90, # 90 days
+    'admin_authz_secret': None,
+    'admin_authz_url': None,
+    'address': '', # leave empty for localhost
     'port': 8888,
     'debug': False,
     'loglevel': 'info',
@@ -78,7 +82,6 @@ def main():
         raise Exception('invalid loglevel')
     config['loglevel'] = getattr(logging, config['loglevel'].upper())
 
-    logger = logging.getLogger('setup')
     logfmt = '%(asctime)s %(levelname)s %(name)s %(module)s:%(lineno)s - %(message)s'
     logging.basicConfig(level=config['loglevel'], format=logfmt)
 
@@ -91,10 +94,12 @@ def main():
         config['oauth_token_uri'] = ret['token_endpoint']
         config['oauth_userinfo_uri'] = ret['userinfo_endpoint']
     except Exception:
-        logger.error("failed to do OAuth self-discovery")
+        logging.error("failed to do OAuth self-discovery")
         raise
 
     # set up server
+    if not config['address']:
+        config['address'] = f'http://localhost:{config["port"]}'
     server = WebServer(config)
     server.start()
 

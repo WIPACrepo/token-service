@@ -11,6 +11,7 @@ USER app
 WORKDIR /usr/src/app
 
 COPY server.py ./
+COPY authz_admin.py ./
 COPY token_service ./token_service/
 
 CMD [ "python", "./server.py" ]

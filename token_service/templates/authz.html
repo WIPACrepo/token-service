@@ -1,0 +1,35 @@
+{% extends main.html %}
+
+{% block title %}Authz - IceCube Token Service{% end %}
+
+{% block bodyclass %}authz{% end %}
+
+{% block content %}
+{% if error_message %}
+<p class="error">{{ error_message }}</p>
+{% end %}
+
+<h3>New authz endpoint:</h3>
+<form method="post" class="new_endpoint">
+{% module xsrf_form_html() %}
+    <div>Name: <input type="text" name="name" value="" autofocus /></div>
+    <div>Scopes: <input type="text" name="scopes" value="" /> <span class="italics">(comma-separated list)</span></div>
+    <div>Secret: <input type="text" name="secret" value="" /></div>
+    <div>URL: <input type="text" name="url" value="" /></div>
+    <input type="submit" value="Submit" />
+</form>
+
+<h3>Existing authz endpoints:</h3>
+<form method="post" class="existing_endpoints">
+{% module xsrf_form_html() %} 
+    <input type="hidden" name="delete" value="true" />
+    <div class="italics">(click to delete endpoint)</div>
+{% for endpoint in endpoints %} 
+        <div class="endpoint">
+            <input type="checkbox" id="{{ endpoint['name'] }}" name="name" value="{{ endpoint['name'] }}">
+            <label for="{{ endpoint['name'] }}">{{ endpoint['name'] }}: {{ endpoint['url'] }}</label>
+        </div>
+{% end %}
+    <input type="submit" value="Delete checked endpoints" />
+</form>
+{% end %}

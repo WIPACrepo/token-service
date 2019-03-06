@@ -13,30 +13,11 @@ from tornado.httputil import url_concat
 from rest_tools.client import AsyncSession, json_encode, json_decode
 from rest_tools.server import Auth, RestServer, authenticated, catch_error
 
-from .base import BaseHandler
+from .base import AuthzBaseHandler
+from .mixins import HumanHandlerMixin, BotHandlerMixin
 
 
-class TokenBaseHandler(BaseHandler):
-    async def req(self, method, url, args=None):
-        kwargs = {}
-        if method in ('GET', 'HEAD'):
-            kwargs['params'] = args
-        else:
-            kwargs['json'] = args
-        r = await asyncio.wrap_future(self.session.request(method, url, **kwargs))
-        r.raise_for_status()
-        return json_decode(r.content)
-
-class HumanHandler(TokenBaseHandler):
-    def get_current_user(self):
-        try:
-            self.identity = json_decode(self.get_secure_cookie('identity'))
-            return self.identity['sub']
-        except Exception:
-            logging.info('failed auth', exc_info=True)
-        return None
-
-class TokenHandler(HumanHandler):
+class TokenHandler(HumanHandlerMixin, AuthzBaseHandler):
     """
     Handler for user-interacting token request.
 
@@ -50,7 +31,7 @@ class TokenHandler(HumanHandler):
     @catch_error
     async def get(self):
         if not self.current_user:
-            url = url_concat(self.get_login_url(), {'redirect': self.request.full_url()})
+            url = url_concat(self.get_login_url(), {'redirect': self.get_current_url()})
             if self.get_argument('state', False):
                 url = url_concact(url, {'state': self.get_argument('state')})
             self.redirect(url)
@@ -66,8 +47,21 @@ class TokenHandler(HumanHandler):
             'name': self.identity['name'],
             'refresh_lifetime': self.identity['expiration'],
         }
-        # TODO: should check authz here
-        data['scopes'] = ' '.join(scopes)
+        scope_ret = []
+        for s in scopes:
+            logging.info('checking scope %s', s)
+            ret = await self.authz.get_by_scope(s)
+            try:
+                token = self.create_token(ret['secret'])
+                ret = await self.req('GET', ret['url'], token=token)
+            except Exception:
+                logging.info('denied scope %s', s, exc_info=True)
+            else:
+                if ret:
+                    scope_ret.append(ret)
+                else:
+                    scope_ret.append(s)
+        data['scopes'] = ' '.join(scope_ret)
 
         # authz all done, make tokens
         access = self.auth.create_token(self.identity['sub'], type='temp',
@@ -84,7 +78,8 @@ class TokenHandler(HumanHandler):
         else:
             self.write({'access':access,'refresh':refresh})
 
-class ServiceTokenHandler(HumanHandler):
+
+class ServiceTokenHandler(HumanHandlerMixin, AuthzBaseHandler):
     """
     Handler for user-interacting service token request.
 
@@ -99,7 +94,7 @@ class ServiceTokenHandler(HumanHandler):
     @catch_error
     async def get(self):
         if not self.current_user:
-            url = url_concat(self.get_login_url(), {'redirect': self.request.full_url()})
+            url = url_concat(self.get_login_url(), {'redirect': self.get_current_url()})
             if self.get_argument('state', False):
                 url = url_concact(url, {'state': self.get_argument('state')})
             self.redirect(url)
@@ -114,8 +109,21 @@ class ServiceTokenHandler(HumanHandler):
             'ver': 'scitoken:2.0',
             'name': self.identity['name'],
         }
-        # TODO: should check authz here
-        data['scopes'] = ' '.join(scopes)
+        scope_ret = []
+        for s in scopes:
+            logging.info('checking scope %s', s)
+            ret = await self.authz.get_by_scope(s)
+            try:
+                token = self.create_token(ret['secret'])
+                ret = await self.req('GET', ret['url'], token=token)
+            except Exception:
+                logging.info('denied scope %s', s, exc_info=True)
+            else:
+                if ret:
+                    scope_ret.append(ret)
+                else:
+                    scope_ret.append(s)
+        data['scopes'] = ' '.join(scope_ret)
 
         # authz all done, make a token
         exp = None
@@ -127,25 +135,7 @@ class ServiceTokenHandler(HumanHandler):
         self.write(token)
 
 
-class BotHandler(TokenBaseHandler):
-    def get_current_user(self):
-        try:
-            type,token = self.request.headers['Authorization'].split(' ', 1)
-            if type.lower() != 'bearer':
-                raise Exception('bad header type')
-            logging.debug('token: %r', token)
-            host_uri = self.request.protocol + "://" + self.request.host
-            data = self.auth.validate(token, audience=['ANY',host_uri])
-            self.auth_data = data
-            self.auth_key = token
-            return data['sub']
-        except Exception:
-            if self.settings['debug'] and 'Authorization' in self.request.headers:
-                logging.info('Authorization: %r', self.request.headers['Authorization'])
-            logging.info('failed auth', exc_info=True)
-        return None
-
-class RefreshHandler(BotHandler):
+class RefreshHandler(BotHandlerMixin, AuthzBaseHandler):
     """
     Handler for refresh token request.
 

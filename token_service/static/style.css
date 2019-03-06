@@ -180,7 +180,7 @@ p { line-height:1.2em; margin-bottom:.5em; }
 ol li { margin: 0.4em 0.2em; }
 
 
-/* authorlist rules */
+/* rules */
 body {
     background: #ccc;
 }
@@ -235,4 +235,14 @@ form>div {
 .error {
     color: red;
     padding: .25em .5em;
+}
+
+body.authz form.new_endpoint {
+  margin-bottom: 2em;
+}
+.italics {
+  font-style: italic;
+}
+body.authz form.existing_endpoints input {
+  margin-top: 1em;
 }
