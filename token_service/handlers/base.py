@@ -1,3 +1,5 @@
+import logging
+
 import tornado.web
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httputil import url_concat
@@ -41,4 +43,8 @@ class AuthzBaseHandler(BaseHandler):
                 kwargs['body'] = json_encode(args)
         http = AsyncHTTPClient()
         ret = await http.fetch(url, **kwargs)
-        return json_decode(ret.body)
+        try:
+            return json_decode(ret.body)
+        except Exception:
+            logging.info('body: %s', ret.body)
+            raise

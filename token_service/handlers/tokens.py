@@ -39,8 +39,8 @@ class TokenHandler(HumanHandlerMixin, AuthzBaseHandler):
 
         # scope checks
         scopes = []
-        if self.get_argument('scopes', False):
-            scopes = self.get_argument('scopes').split()
+        if self.get_argument('scope', False):
+            scopes = self.get_argument('scope').split()
         data = {
             'aud': 'ANY',
             'ver': 'scitoken:2.0',
@@ -50,18 +50,29 @@ class TokenHandler(HumanHandlerMixin, AuthzBaseHandler):
         scope_ret = []
         for s in scopes:
             logging.info('checking scope %s', s)
-            ret = await self.authz.get_by_scope(s)
             try:
-                token = self.create_token(ret['secret'])
-                ret = await self.req('GET', ret['url'], token=token)
-            except Exception:
-                logging.info('denied scope %s', s, exc_info=True)
-            else:
-                if ret:
-                    scope_ret.append(ret)
+                ret = await self.authz.get_by_scope(s)
+                try:
+                    token = self.create_token(ret['secret'])
+                    ret = await self.req('GET', ret['url'], token=token)
+                except Exception:
+                    logging.info('denied scope %s', s, exc_info=True)
                 else:
-                    scope_ret.append(s)
-        data['scopes'] = ' '.join(scope_ret)
+                    if ret:
+                        if 'scope' in ret:
+                            scope_ret.append(ret.pop('scope'))
+                        else:
+                            scope_ret.append(s)
+                        for k in ret:
+                            if k in data:
+                                raise KeyError(f'{k} already in data')
+                            data[k] = ret[k]
+                    else:
+                        scope_ret.append(s)
+            except Exception:
+                logging.warning('error checking scope %s', s, exc_info=True)
+                raise HTTPError(400, 'bad scope')
+        data['scope'] = ' '.join(scope_ret)
 
         # authz all done, make tokens
         access = self.auth.create_token(self.identity['sub'], type='temp',
