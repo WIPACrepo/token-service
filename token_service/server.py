@@ -10,8 +10,10 @@ from rest_tools.client import AsyncSession
 from rest_tools.server import Auth, RestServer
 
 from .handlers import (LoginHandler, TokenHandler, ServiceTokenHandler,
-                       RefreshHandler, AuthzRegistrationHandler)
+                       RefreshHandler, AuthzRegistrationHandler,
+                       RevocationViewHandler, RevocationListHandler)
 from .authz_server import AuthzServer
+from .revocation_server import RevocationListServer
 
 def get_template_path():
     return os.path.join(os.path.dirname(__file__),'templates')
@@ -44,6 +46,11 @@ class WebServer:
             admin_authz_url=config['admin_authz_url'],
         )
 
+        # set up revocation list
+        revocation_list = RevocationListServer(
+            mongodb_uri=config['mongodb_uri'],
+        )
+
         self.server = RestServer(
             static_path=get_static_path(),
             template_path=get_template_path(),
@@ -70,13 +77,17 @@ class WebServer:
         })
         service_handler_settings = handler_settings.copy()
         service_handler_settings['auth'] = service_auth
+        
+        revocation_handler_settings = handler_settings.copy()
+        revocation_handler_settings['revocation_list'] = revocation_list
 
         self.server.add_route(r'/login', LoginHandler, login_handler_settings)
         self.server.add_route(r'/token', TokenHandler, handler_settings, 'token')
         self.server.add_route(r'/service_token', ServiceTokenHandler, service_handler_settings)
         self.server.add_route(r'/refresh', RefreshHandler, handler_settings)
         self.server.add_route(r'/manage_authz', AuthzRegistrationHandler, handler_settings)
-        
+        self.server.add_route(r'/revocation', RevocationViewHandler, revocation_handler_settings)
+        self.server.add_route(r'/revocation_api', RevocationListHandler, revocation_handler_settings)
 
     def start(self):
         self.server.startup(port=self.config['port'], address='0.0.0.0')

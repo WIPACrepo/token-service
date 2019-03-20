@@ -1,0 +1,36 @@
+{% extends main.html %}
+
+{% block title %}Revocation - IceCube Token Service{% end %}
+
+{% block bodyclass %}revocation{% end %}
+
+{% block content %}
+{% if error_message %}
+<p class="error">{{ error_message }}</p>
+{% end %}
+
+<h3>Revoked tokens:</h3>
+<div class="revoked_tokens">
+{% for t in revoked %}
+    <div class="token">
+        Sub: {{ t['sub'] }}
+        Hash: {{ t['hash'] }}
+        Exp: {{ t['exp'] }}
+        Scopes: {{ ' '.join(t['scopes']) }}
+    </div>
+{% end %}
+</div>
+
+<h3>Valid tokens:</h3>
+<form method="post" class="valid_tokens">
+{% module xsrf_form_html() %}
+    <div class="italics">(click to revoke token)</div>
+{% for t in tokens %}
+        <div class="token">
+            <input type="checkbox" id="{{ t['hash'] }}" name="hash" value="{{ t['hash'] }}">
+            <label for="{{ t['hash'] }}">{{ t['sub'] }}: {{ t['hash'] }} {{ t['exp'] }} {{ ' '.join(t['scopes']) }}</label>
+        </div>
+{% end %}
+    <input type="submit" value="Revoke checked tokens" />
+</form>
+{% end %}
