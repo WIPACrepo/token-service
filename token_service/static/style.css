@@ -246,3 +246,15 @@ body.authz form.new_endpoint {
 body.authz form.existing_endpoints input {
   margin-top: 1em;
 }
+
+body.revocation table td, body.revocation table th {
+  padding: 0.2em 0.4em;
+  border: 1px solid black;
+  word-break: break-all;
+}
+body.revocation table {
+  margin: 0.4em;
+}
+body.revocation input[type=submit] {
+  margin: 0.4em;
+}

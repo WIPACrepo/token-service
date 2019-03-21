@@ -80,6 +80,24 @@ class TokenHandler(HumanHandlerMixin, AuthzBaseHandler):
         refresh = self.auth.create_token(self.identity['sub'], type='refresh',
                                          payload=data)
 
+        # add to revocation list
+        access_data = self.auth.validate(access, audience='ANY')
+        await self.revocation_list.add(
+            token_hash=access.rsplit('.',1)[-1],
+            sub=access_data['sub'],
+            scopes=access_data['scope'].split(),
+            exp=access_data['exp'],
+            type=access_data['type'],
+        )
+        refresh_data = self.auth.validate(refresh, audience='ANY')
+        await self.revocation_list.add(
+            token_hash=refresh.rsplit('.',1)[-1],
+            sub=refresh_data['sub'],
+            scopes=refresh_data['scope'].split(),
+            exp=refresh_data['exp'],
+            type=refresh_data['type'],
+        )
+
         if self.get_argument('redirect', False):
             url = self.get_argument('redirect')
             args = {'access': access, 'refresh': refresh}
@@ -113,8 +131,8 @@ class ServiceTokenHandler(HumanHandlerMixin, AuthzBaseHandler):
 
         # scope checks
         scopes = []
-        if self.get_argument('scopes', False):
-            scopes = self.get_argument('scopes').split()
+        if self.get_argument('scope', False):
+            scopes = self.get_argument('scope').split()
         data = {
             'aud': 'ANY',
             'ver': 'scitoken:2.0',
@@ -134,7 +152,7 @@ class ServiceTokenHandler(HumanHandlerMixin, AuthzBaseHandler):
                     scope_ret.append(ret)
                 else:
                     scope_ret.append(s)
-        data['scopes'] = ' '.join(scope_ret)
+        data['scope'] = ' '.join(scope_ret)
 
         # authz all done, make a token
         exp = None
@@ -142,6 +160,16 @@ class ServiceTokenHandler(HumanHandlerMixin, AuthzBaseHandler):
             exp = int(self.get_argument('expiration'))
         token = self.auth.create_token(self.identity['sub'], type='service',
                                        expiration=exp, payload=data)
+
+        # add to revocation list
+        token_data = self.auth.validate(token, audience='ANY')
+        await self.revocation_list.add(
+            token_hash=token.rsplit('.',1)[-1],
+            sub=token_data['sub'],
+            scopes=token_data['scope'].split(),
+            exp=token_data['exp'],
+            type=token_data['type'],
+        )
 
         self.write(token)
 
@@ -171,5 +199,24 @@ class RefreshHandler(BotHandlerMixin, AuthzBaseHandler):
                                         payload=data)
         refresh = self.auth.create_token(self.auth_data['sub'], type='refresh',
                                          payload=data)
+
+        # add to revocation list
+        access_data = self.auth.validate(access, audience='ANY')
+        await self.revocation_list.add(
+            token_hash=access.rsplit('.',1)[-1],
+            sub=access_data['sub'],
+            scopes=access_data['scope'].split(),
+            exp=access_data['exp'],
+            type=access_data['type'],
+        )
+        refresh_data = self.auth.validate(refresh, audience='ANY')
+        await self.revocation_list.add(
+            token_hash=refresh.rsplit('.',1)[-1],
+            sub=refresh_data['sub'],
+            scopes=refresh_data['scope'].split(),
+            exp=refresh_data['exp'],
+            type=refresh_data['type'],
+        )
+
         self.write({'access':access,'refresh':refresh})
 

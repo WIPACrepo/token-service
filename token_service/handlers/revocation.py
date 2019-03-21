@@ -16,13 +16,7 @@ from .base import AuthzBaseHandler
 from .mixins import HumanHandlerMixin, BotHandlerMixin
 
 
-class RevocationBaseHandler(AuthzBaseHandler):
-    def initialize(self, revocation_list, **kwargs):
-        super(RevocationBaseHandler, self).initialize(**kwargs)
-        self.revocation_list = revocation_list
-
-
-class RevocationViewHandler(HumanHandlerMixin, RevocationBaseHandler):
+class RevocationViewHandler(HumanHandlerMixin, AuthzBaseHandler):
     """
     Handler for user-interacting revocations.
     """
@@ -66,7 +60,7 @@ class RevocationViewHandler(HumanHandlerMixin, RevocationBaseHandler):
         self.render('revocation.html', revoked=revoked, tokens=alive, error_message=err)
 
 
-class RevocationListHandler(RevocationBaseHandler):
+class RevocationListHandler(AuthzBaseHandler):
     """
     Handler for retrieving the revocation list as json.
 

@@ -65,9 +65,11 @@ class WebServer:
             'auth': auth,
             'identity_expiration': config['identity_expiration'],
             'authz': authz,
+            'revocation_list': revocation_list,
         }
         login_handler_settings = handler_settings.copy()
         del login_handler_settings['authz']
+        del login_handler_settings['revocation_list']
         login_handler_settings.update({
             'oauth_authorize_uri': config['oauth_authorize_uri'],
             'oauth_token_uri': config['oauth_token_uri'],
@@ -77,17 +79,14 @@ class WebServer:
         })
         service_handler_settings = handler_settings.copy()
         service_handler_settings['auth'] = service_auth
-        
-        revocation_handler_settings = handler_settings.copy()
-        revocation_handler_settings['revocation_list'] = revocation_list
 
         self.server.add_route(r'/login', LoginHandler, login_handler_settings)
         self.server.add_route(r'/token', TokenHandler, handler_settings, 'token')
         self.server.add_route(r'/service_token', ServiceTokenHandler, service_handler_settings)
         self.server.add_route(r'/refresh', RefreshHandler, handler_settings)
         self.server.add_route(r'/manage_authz', AuthzRegistrationHandler, handler_settings)
-        self.server.add_route(r'/revocation', RevocationViewHandler, revocation_handler_settings)
-        self.server.add_route(r'/revocation_api', RevocationListHandler, revocation_handler_settings)
+        self.server.add_route(r'/revocation', RevocationViewHandler, handler_settings)
+        self.server.add_route(r'/revocation_api', RevocationListHandler, handler_settings)
 
     def start(self):
         self.server.startup(port=self.config['port'], address='0.0.0.0')

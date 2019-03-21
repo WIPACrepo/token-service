@@ -10,27 +10,49 @@
 {% end %}
 
 <h3>Revoked tokens:</h3>
-<div class="revoked_tokens">
+<table class="revoked_tokens">
+<tr>
+    <th>Sub</th>
+    <th>Type</th>
+    <th>Exp</th>
+    <th>Scopes</th>
+    <th>Hash</th>
+</tr>
 {% for t in revoked %}
-    <div class="token">
-        Sub: {{ t['sub'] }}
-        Hash: {{ t['hash'] }}
-        Exp: {{ t['exp'] }}
-        Scopes: {{ ' '.join(t['scopes']) }}
-    </div>
+<tr class="token">
+    <td>{{ t['sub'] }}</td>
+    <td>{{ t['type'] }}</td>
+    <td>{{ t['exp'] }}</td>
+    <td>{{ ' '.join(t['scopes']) }}</td>
+    <td>{{ t['hash'] }}</td>
+</tr>
 {% end %}
-</div>
+</table>
 
 <h3>Valid tokens:</h3>
 <form method="post" class="valid_tokens">
 {% module xsrf_form_html() %}
-    <div class="italics">(click to revoke token)</div>
+<div class="italics">(click to revoke token)</div>
+<table>
+<tr>
+    <th></th>
+    <th>Sub</th>
+    <th>Type</th>
+    <th>Exp</th>
+    <th>Scopes</th>
+    <th>Hash</th>
+</tr>
 {% for t in tokens %}
-        <div class="token">
-            <input type="checkbox" id="{{ t['hash'] }}" name="hash" value="{{ t['hash'] }}">
-            <label for="{{ t['hash'] }}">{{ t['sub'] }}: {{ t['hash'] }} {{ t['exp'] }} {{ ' '.join(t['scopes']) }}</label>
-        </div>
+<tr class="token">
+    <td><input type="checkbox" id="{{ t['hash'] }}" name="hash" value="{{ t['hash'] }}"></td>
+    <td>{{ t['sub'] }}</td>
+    <td>{{ t['type'] }}</td>
+    <td>{{ t['exp'] }}</td>
+    <td>{{ ' '.join(t['scopes']) }}</td>
+    <td>{{ t['hash'] }}</td>
+</tr>
 {% end %}
-    <input type="submit" value="Revoke checked tokens" />
+</table>
+<input type="submit" value="Revoke checked tokens" />
 </form>
 {% end %}

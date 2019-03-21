@@ -20,9 +20,10 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class AuthzBaseHandler(BaseHandler):
-    def initialize(self, authz, **kwargs):
+    def initialize(self, authz, revocation_list, **kwargs):
         super(AuthzBaseHandler, self).initialize(**kwargs)
         self.authz = authz
+        self.revocation_list = revocation_list
 
     def create_token(self, secret):
         a = Auth(secret, issuer='authz')

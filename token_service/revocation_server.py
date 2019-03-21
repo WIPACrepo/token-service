@@ -50,7 +50,7 @@ class RevocationListServer:
             await self.db.tokens.delete_many({'exp':{'$lt':time.time()}})
             await asyncio.sleep(60)
 
-    async def list(self, revoked=None, sub=None, exp=None):
+    async def list(self, revoked=None, sub=None, exp=None, type=None):
         """
         List all tokens.
 
@@ -58,6 +58,7 @@ class RevocationListServer:
             revoked: True/False/None for revoked, not-revoked, and all tokens
             sub (str): subject of user
             exp (int): max expiration
+            type (str): token type
         Returns:
             list: list of dict objects
         """
@@ -68,6 +69,8 @@ class RevocationListServer:
             filt['sub'] = sub
         if exp:
             filt['exp'] = {'$lte': exp}
+        if type:
+            filt['type'] = type
         return await self.db.tokens.find(filt).limit(100000).to_list(100000)
 
     async def get(self, token_hash):
@@ -84,7 +87,7 @@ class RevocationListServer:
             raise KeyError(f'{token_hash} not found')
         return ret
 
-    async def add(self, token_hash, sub, scopes, exp):
+    async def add(self, token_hash, sub, scopes, exp, type):
         """
         Add a token by hash.
 
@@ -93,6 +96,7 @@ class RevocationListServer:
             sub (str): subject of user
             exp (int): expiration (unix time)
             scopes (list): list of scopes
+            type (str): token type
         """
         assert isinstance(scopes, list)
         value = {
@@ -101,6 +105,7 @@ class RevocationListServer:
             'sub': sub,
             'scopes': scopes,
             'exp': exp,
+            'type': type,
         }
         ret = await self.db.tokens.insert_one(value)
         if not ret.inserted_id:
