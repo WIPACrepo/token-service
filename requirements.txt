@@ -1,9 +1,12 @@
 alabaster==0.7.12
+asn1crypto==0.24.0
 Babel==2.6.0
 backcall==0.1.0
 certifi==2018.11.29
+cffi==1.12.2
 chardet==3.0.4
 coverage==4.5.2
+cryptography==2.6.1
 decorator==4.3.2
 docutils==0.14
 idna==2.8
@@ -20,6 +23,7 @@ pexpect==4.6.0
 pickleshare==0.7.5
 prompt-toolkit==2.0.8
 ptyprocess==0.6.0
+pycparser==2.19
 Pygments==2.3.1
 PyJWT==1.7.1
 pymongo==3.7.2
@@ -29,7 +33,7 @@ requests==2.21.0
 requests-futures==0.9.9
 requests-mock==1.5.2
 requests-toolbelt==0.9.1
--e git+https://github.com/WIPACrepo/rest-tools.git@66016820552c6e3452a2d45413772ca53fc4c1e2#egg=rest_tools
+-e git+https://github.com/WIPACrepo/rest-tools.git@680724565a9c0d2d261b36d1e01f2713672f612a#egg=rest_tools
 six==1.12.0
 snowballstemmer==1.2.1
 Sphinx==1.8.4

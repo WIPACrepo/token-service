@@ -33,7 +33,7 @@ class TokenHandler(HumanHandlerMixin, AuthzBaseHandler):
         if not self.current_user:
             url = url_concat(self.get_login_url(), {'redirect': self.get_current_url()})
             if self.get_argument('state', False):
-                url = url_concact(url, {'state': self.get_argument('state')})
+                url = url_concat(url, {'state': self.get_argument('state')})
             self.redirect(url)
             return
 
@@ -103,7 +103,9 @@ class TokenHandler(HumanHandlerMixin, AuthzBaseHandler):
             args = {'access': access, 'refresh': refresh}
             if self.get_argument('state', False):
                 args['state'] = self.get_argument('state')
-            self.redirect(url_concact(url, args))
+            url = url_concat(url, args)
+            logging.info('redirect to %r', url)
+            self.redirect(url)
         else:
             self.write({'access':access,'refresh':refresh})
 
@@ -125,7 +127,7 @@ class ServiceTokenHandler(HumanHandlerMixin, AuthzBaseHandler):
         if not self.current_user:
             url = url_concat(self.get_login_url(), {'redirect': self.get_current_url()})
             if self.get_argument('state', False):
-                url = url_concact(url, {'state': self.get_argument('state')})
+                url = url_concat(url, {'state': self.get_argument('state')})
             self.redirect(url)
             return
 

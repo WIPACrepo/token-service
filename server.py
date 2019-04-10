@@ -29,6 +29,7 @@ def gen_secret(length):
 EXPECTED_CONFIG = {
     'cookie_secret': gen_secret(64),
     'auth_secret': gen_secret(64),
+    'auth_pub_secret': '',
     'mongodb_uri': 'mongodb://localhost:27017/',
     'oauth_uri': None,
     'oauth_client_id': None,

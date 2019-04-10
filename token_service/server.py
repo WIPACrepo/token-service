@@ -28,17 +28,21 @@ class WebServer:
         # set up Auth
         auth = Auth(
             secret=config['auth_secret'],
+            pub_secret=config['auth_pub_secret'],
             issuer=config["address"],
+            algorithm='RS512',
             expiration=config['refresh_token_expiration'],
             expiration_temp=config['access_token_expiration'],
         )
         service_auth = Auth(
             secret=config['auth_secret'],
+            pub_secret=config['auth_pub_secret'],
             issuer=config["address"],
+            algorithm='RS512',
             expiration=config['service_token_expiration'],
             expiration_temp=config['access_token_expiration'],
         )
-        
+
         # set up authz
         authz = AuthzServer(
             mongodb_uri=config['mongodb_uri'],
