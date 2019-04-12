@@ -2,6 +2,7 @@ import time
 import hmac
 import base64
 import urllib.parse
+import logging
 
 import tornado.auth
 from tornado.httpclient import HTTPError
@@ -77,6 +78,25 @@ class LoginHandler(BaseHandler, tornado.auth.OAuth2Mixin):
 
     @catch_error
     async def get(self):
+        if self.testing:
+            logging.info('testing mode')
+            user = {
+                'sub': 'testing',
+                'name': 'test testing',
+                'groups': 'testing',
+                'expiration': get_exp_date(10000),
+            }
+            self.set_secure_cookie('identity', json_encode(user),
+                                   expires_days=1)
+            if self.get_argument('redirect', False):
+                url = self.get_argument('redirect')
+                if self.get_argument('state', False):
+                    url = url_concat(url, {'state': self.get_argument('state')})
+                self.redirect(url)
+                return
+            else:
+                raise HTTPError(400, 'missing redirect')
+
         if self.get_argument('code', False):
             data = self.decode_state(self.get_argument('state'))
             user = await self.get_authenticated_user(

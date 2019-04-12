@@ -7,10 +7,11 @@ from rest_tools.client import json_encode, json_decode
 from rest_tools.server import Auth
 
 class BaseHandler(tornado.web.RequestHandler):
-    def initialize(self, address, auth, identity_expiration):
+    def initialize(self, address, auth, identity_expiration, testing=False):
         self.address = address
         self.auth = auth
         self.identity_expiration = identity_expiration
+        self.testing = testing
 
     def set_default_headers(self):
         self._headers['Server'] = 'IceCube Token Service'
