@@ -14,7 +14,7 @@ jobs:
                 pytest tests
     deploy:
         docker:
-            - image: circleci-buildpack-deps:stretch
+            - image: circleci/buildpack-deps:stretch
               environment:
                 IMAGE_NAME: wipac/token-service
         steps:
