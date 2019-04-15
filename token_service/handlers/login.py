@@ -6,6 +6,7 @@ import logging
 
 import tornado.auth
 from tornado.httpclient import HTTPError
+from tornado.httputil import url_concat
 from tornado.escape import utf8
 from rest_tools.client import json_encode, json_decode
 from rest_tools.server import catch_error
