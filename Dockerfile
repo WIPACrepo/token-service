@@ -11,7 +11,7 @@ ENV PYTHONPATH=/install/lib/python3.7/site-packages
 COPY requirements.txt /requirements.txt
 RUN pip install --prefix=/install -r /requirements.txt
 
-FROM base
+FROM base as runtime
 
 COPY --from=builder /install /usr/local
 RUN ln -s /usr/local/src /install/src

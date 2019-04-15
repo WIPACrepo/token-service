@@ -20,14 +20,20 @@ jobs:
         steps:
             - checkout
             - setup_remote_docker
-            - run:
-                name: Build Docker image
-                command: docker build -t $IMAGE_NAME:latest .
-            - run:
-                name: Publish Docker Image to Docker Hub
-                command: |
-                    echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                    docker push $IMAGE_NAME:latest
+            - run: |
+                docker pull $IMAGE_NAME-builder:latest
+            - run: |
+                docker pull $IMAGE_NAME:latest
+            - run: |
+                docker build --target builder -t $IMAGE_NAME-builder:latest .
+            - run: |
+                docker build --target runtime -t $IMAGE_NAME:latest .
+            - run: |
+                echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                docker push $IMAGE_NAME-builder:latest
+            - run: |
+                echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                docker push $IMAGE_NAME:latest
 workflows:
     version: 2
     build_and_test:
