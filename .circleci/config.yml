@@ -21,16 +21,16 @@ jobs:
             - checkout
             - setup_remote_docker
             - run: |
-                docker pull $IMAGE_NAME-builder:latest || echo "first build"
+                docker pull $IMAGE_NAME:build-stage || echo "first build"
             - run: |
                 docker pull $IMAGE_NAME:latest || echo "first build"
             - run: |
-                docker build --target builder -t $IMAGE_NAME-builder:latest .
+                docker build --target builder -t $IMAGE_NAME:build-stage .
             - run: |
                 docker build --target runtime -t $IMAGE_NAME:latest .
             - run: |
                 echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                docker push $IMAGE_NAME-builder:latest
+                docker push $IMAGE_NAME:build-stage
             - run: |
                 echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
                 docker push $IMAGE_NAME:latest
