@@ -21,9 +21,9 @@ jobs:
             - checkout
             - setup_remote_docker
             - run: |
-                docker pull $IMAGE_NAME-builder:latest
+                docker pull $IMAGE_NAME-builder:latest || echo "first build"
             - run: |
-                docker pull $IMAGE_NAME:latest
+                docker pull $IMAGE_NAME:latest || echo "first build"
             - run: |
                 docker build --target builder -t $IMAGE_NAME-builder:latest .
             - run: |
