@@ -30,12 +30,12 @@ jobs:
                 docker build --target builder -t $IMAGE_NAME:build-stage .
             - run: |
                 docker build --target runtime -t $IMAGE_NAME:$TAG .
-            #~ - run: |
-                #~ echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                #~ docker push $IMAGE_NAME:build-stage
-            #~ - run: |
-                #~ echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                #~ docker push $IMAGE_NAME:$TAG
+            - run: |
+                echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                docker push $IMAGE_NAME:build-stage
+            - run: |
+                echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                docker push $IMAGE_NAME:$TAG
 workflows:
     version: 2
     build_and_test:
