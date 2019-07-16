@@ -100,6 +100,8 @@ def main():
     # set up server
     if not config['address']:
         config['address'] = f'http://localhost:{config["port"]}'
+    for k in config:
+        logging.debug(f'config {k}={config[k]}')
     server = TestWebServer(config)
     server.start()
 

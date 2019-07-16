@@ -39,12 +39,12 @@ requests==2.21.0
 requests-futures==0.9.9
 requests-mock==1.5.2
 requests-toolbelt==0.9.1
--e git+https://github.com/WIPACrepo/rest-tools.git@680724565a9c0d2d261b36d1e01f2713672f612a#egg=rest_tools
+-e git+https://github.com/WIPACrepo/rest-tools.git@fe4cc147fe3f6550de193733a78a47a4900daf3f#egg=rest_tools
 six==1.12.0
 snowballstemmer==1.2.1
 Sphinx==1.8.4
 sphinxcontrib-websupport==1.1.0
 tornado==5.1.1
 traitlets==4.3.2
-urllib3==1.24.1
+urllib3==1.25.3
 wcwidth==0.1.7
