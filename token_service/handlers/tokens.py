@@ -151,17 +151,28 @@ class ServiceTokenHandler(HumanHandlerMixin, AuthzBaseHandler):
         else:
             for s in scopes:
                 logging.info('checking scope %s', s)
-                ret = await self.authz.get_by_scope(s)
                 try:
-                    token = self.create_token(ret['secret'])
-                    ret = await self.req('GET', ret['url'], token=token)
-                except Exception:
-                    logging.info('denied scope %s', s, exc_info=True)
-                else:
-                    if ret:
-                        scope_ret.append(ret)
+                    ret = await self.authz.get_by_scope(s)
+                    try:
+                        token = self.create_token(ret['secret'])
+                        ret = await self.req('GET', ret['url'], token=token)
+                    except Exception:
+                        logging.info('denied scope %s', s, exc_info=True)
                     else:
-                        scope_ret.append(s)
+                        if ret:
+                            if 'scope' in ret:
+                                scope_ret.append(ret.pop('scope'))
+                            else:
+                                scope_ret.append(s)
+                            for k in ret:
+                                if k in data:
+                                    raise KeyError(f'{k} already in data')
+                                data[k] = ret[k]
+                        else:
+                            scope_ret.append(s)
+                except Exception:
+                    logging.warning('error checking scope %s', s, exc_info=True)
+                    raise HTTPError(400, 'bad scope')
         data['scope'] = ' '.join(scope_ret)
 
         # authz all done, make a token
