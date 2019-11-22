@@ -213,7 +213,7 @@ class RefreshHandler(BotHandlerMixin, AuthzBaseHandler):
             raise HTTPError(400, 'bad token type')
 
         data = {}
-        for key in ('aud', 'ver', 'name', 'refresh_lifetime', 'scopes'):
+        for key in ('aud', 'ver', 'name', 'refresh_lifetime', 'scope'):
             data[key] = self.auth_data[key]
 
         access = self.auth.create_token(self.auth_data['sub'], type='temp',
