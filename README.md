@@ -1,3 +1,5 @@
+This service is no longer used.  Code is archived here.
+
 # token-service
 IceCube Token Service
 
